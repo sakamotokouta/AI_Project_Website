@@ -1,0 +1,18 @@
+:root {
+  --color-base: #fff8ec;
+  --color-surface: #ffffff;
+  --color-main: #d8a85f;
+  --color-accent: #8f4e29;
+  --color-leaf: #596f3a;
+  --color-berry: #a6454d;
+  --color-text: #35271e;
+  --color-muted: #76695f;
+  --color-border: #ead8bd;
+  --shadow-card: 0 12px 26px rgba(63, 42, 29, 0.09);
+  --radius-card: 8px;
+  --radius-button: 999px;
+}
+
+$breakpoint-sm: 600px;
+$breakpoint-md: 900px;
+$breakpoint-lg: 1200px;

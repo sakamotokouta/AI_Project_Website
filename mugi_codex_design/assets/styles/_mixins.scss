@@ -1,0 +1,7 @@
+@use 'variables' as *;
+
+@mixin below($breakpoint) {
+  @media (max-width: $breakpoint) {
+    @content;
+  }
+}
