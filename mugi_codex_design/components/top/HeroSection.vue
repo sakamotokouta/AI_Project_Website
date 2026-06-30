@@ -1,5 +1,5 @@
 <template>
-  <section class="hero">
+  <section class="hero hero--fade-in">
     <div class="container hero__inner">
       <div class="hero__copy">
         <p class="eyebrow">Morning bread, gentle light</p>
@@ -10,7 +10,11 @@
           <BaseButton to="/menu" label="メニューを見る" variant="outline" />
         </div>
       </div>
-      <img src="/images/hero/bakery-hero.png" alt="焼きたてパンが並ぶベーカリーのカウンター" />
+      <img :src="heroImage" alt="焼きたてパンが並ぶベーカリーのカウンター" />
     </div>
   </section>
 </template>
+
+<script setup lang="ts">
+const heroImage = '/images/hero/bakery-hero.png'
+</script>
