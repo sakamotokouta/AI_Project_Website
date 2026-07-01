@@ -79,6 +79,15 @@ PowerShell の実行ポリシーで `npm` が止まる場合は、Windows では
 - リアルタイム在庫
 - CMS
 
+## Design points
+
+- テーマ: 「朝の食卓に、やさしい灯りを。」
+- 暖色系のベーカリー調カラー（クリーム、小麦色、アクセントブラウン）
+- PC / タブレット / スマートフォン向けレスポンシブレイアウト
+- メニューカード: PC 3列 / タブレット 2列 / スマホ 1列
+- ヒーローとスクロール時のフェードイン、`prefers-reduced-motion` 対応
+- 各ページに SEO メタデータ（title / description / OGP）を設定
+
 ## Future Improvements
 
 - 管理画面からのメニュー更新
