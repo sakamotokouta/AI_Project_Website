@@ -2,16 +2,20 @@ export const snsLinks = [
   {
     type: 'instagram',
     label: 'Instagram',
-    url: 'https://example.com/instagram',
+    url: 'https://www.instagram.com/?hl=ja',
+    icon: '/images/sns/instagram.png'
   },
   {
     type: 'x',
     label: 'X',
-    url: 'https://example.com/x',
+    url: 'https://x.com/explore',
+    icon: '/images/sns/x.png'
+
   },
   {
-    type: 'line',
-    label: 'LINE',
-    url: 'https://example.com/line',
+    type: 'facebook',
+    label: 'Facebook',
+    url: 'https://www.facebook.com/?locale=ja_JP',
+    icon: '/images/sns/facebook.png'
   },
 ] as const

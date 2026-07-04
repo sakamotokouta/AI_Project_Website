@@ -1,14 +1,13 @@
 services:
   db:
-    image: postgres:16-alpine
-    container_name: mugi-no-akari-postgres
-    restart: unless-stopped
+    image: postgres:16
+    container_name: mugi_postgres
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_USER: mugi_user
-      POSTGRES_PASSWORD: mugi_password
-      POSTGRES_DB: mugi_no_akari
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: user1234
+      POSTGRES_DB: mugi_db
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
