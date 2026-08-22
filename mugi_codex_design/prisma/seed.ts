@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client'
-
+import { hashPassword } from '../server/utils/auth'
 const prisma = new PrismaClient()
 
 const menuItems = [
@@ -101,12 +101,41 @@ const menuItems = [
   },
 ]
 
+const admin =[
+  {
+    email:'admin1234@example.com',
+    passwordHash:'12345',
+    name:'admin',
+  },
+  {
+    email:'admin4567@example.com',
+    passwordHash:'4567',
+    name:'staff',
+  }
+]
+
 async function main() {
   for (const item of menuItems) {
     await prisma.menuItem.upsert({
       where: { slug: item.slug },
       update: item,
       create: item,
+    })
+  }
+  for(const item of admin){
+    const passwordHash = await hashPassword(item.passwordHash);
+
+    await prisma.admin.upsert({
+      where: { email: item.email },
+      update: {
+        passwordHash,
+        name:item.name,
+      },
+      create:{
+        email:item.email,
+        passwordHash,
+        name:item.name
+      }
     })
   }
 }

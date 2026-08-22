@@ -1,9 +1,5 @@
 <template>
-  <div>
-    <AppHeader />
-    <main id="main-content">
+    <NuxtLayout>
       <NuxtPage />
-    </main>
-    <AppFooter />
-  </div>
+    </NuxtLayout>
 </template>
