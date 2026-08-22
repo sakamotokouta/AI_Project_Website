@@ -1,408 +1,188 @@
-# 05_FRONTEND_DESIGN.md
+# 05 Frontend design
 
-## Frontend stack
+## Design direction
 
-- Nuxt 3
-- Vue 3
-- TypeScript
-- SCSS
-- Zod or shared validation utilities for form validation
+Theme: **“A gentle light for the morning table.”**
 
-## Design concept
+Use warm cream, wheat, brown, and muted accent tones. The site should feel calm, handcrafted, and modern. Avoid excessive animation, low-contrast text, and decorative effects that make information harder to read.
 
-Theme: 「朝の食卓に、やさしい灯りを。」
+## Public layout
 
-Use a warm, handmade, calm bakery design.
+### Header
 
-## Pages
+- Text/logo for the shop name.
+- Home, About, Menu, Reserve, Contact.
+- SNS links where space permits.
+- Mobile hamburger navigation.
+- No admin link.
+- Header height and hero spacing must be explicit; do not overlap the hero through fragile negative margins.
 
-### `/` Top page
+### Footer
 
-Purpose:
+- Shop information.
+- SNS links.
+- Public navigation.
+- No admin link.
 
-- Communicate brand atmosphere.
-- Show concept, recommended menu, store info, and CTA.
+## Home page `/`
 
 Sections:
 
 ```txt
-HeroSection
+HeroCarousel
 ConceptSection
 RecommendedMenuSection
 StoreInfoSection
 CtaSection
 ```
 
-Hero copy example:
+### Hero responsive layout
 
-```txt
-朝の食卓に、やさしい灯りを。
-国産小麦と天然酵母で焼き上げる、住宅街の小さなベーカリー。
-```
+The existing overlap defect must be prevented structurally.
 
-### `/about` About page
+Desktop/tablet:
 
-Purpose:
+- The hero may overlay text on media only inside a defined safe content area.
+- Use CSS Grid or a stable positioned container.
+- Use a gradient or surface panel to preserve contrast.
+- Use `clamp()` for shop-name and headline sizes.
+- Avoid fixed pixel offsets tied to one viewport.
 
-- Explain store concept and commitment.
-- Show location and access details.
+Small screens:
 
-Sections:
+- Place shop-name/headline content in a separate region above or below the image.
+- Do not rely on text floating over a cropped image.
+- Keep horizontal padding at least 16 px.
+- Prevent header, logo, carousel controls, and text from colliding.
 
-```txt
-PageHero
-AboutConceptSection
-CommitmentSection
-StoreInfoSection
-MapSection
-```
+Required viewport checks:
 
-### `/menu` Menu page
+- 320
+- 375
+- 390
+- 600
+- 768
+- 900
+- 1024
+- 1280
+- 1440 pixels wide
 
-Purpose:
+### Hero carousel behavior
 
-- Display menu cards from DB.
-- Allow category filtering.
+- Fetch from `/api/site/hero-slides`.
+- Default interval: 5000 ms.
+- Fade duration: approximately 500–800 ms.
+- One active slide is visible to assistive technology.
+- Controls: previous, next, dots, pause/play.
+- Provide descriptive accessible labels in Japanese.
+- Pause autoplay on pointer hover and `focus-within`.
+- Pause while `document.hidden` is true.
+- Do not autoplay if reduced motion is requested.
+- When only one slide exists, hide controls and timers.
+- Use a fixed `aspect-ratio` or min-height strategy to avoid layout shift.
+- Use `object-fit: cover` and the configured `objectPosition`.
+- First visible image should load eagerly; subsequent images may load lazily.
+- Use a static fallback slide if the API returns no active slides or fails.
 
-Components:
+## Other public pages
 
-```txt
-PageHero
-MenuCategoryFilter
-MenuList
-MenuCard
-```
+### `/about`
 
-Layout:
+- Page hero.
+- Concept and commitment.
+- Shop information.
+- Access/map area.
 
-- PC: 3 columns
-- Tablet: 2 columns
-- Smartphone: 1 column
+### `/menu`
 
-### `/reserve` Reservation page
+- Page hero.
+- Category filter.
+- Responsive card grid: 3/2/1 columns.
+- Card image, alt text, name, price, description, labels, and allergies.
 
-Purpose:
+### `/reserve`
 
-- Allow users to reserve bakery items for pickup.
-- Save reservation to DB.
-
-States:
+Steps:
 
 ```ts
 type ReserveStep = 'input' | 'confirm' | 'complete'
 ```
 
-Components:
+Fields:
 
-```txt
-PageHero
-ReserveForm
-ReserveConfirm
-ReserveComplete
-```
+- customer name;
+- phone;
+- optional email;
+- pickup date;
+- pickup time;
+- product;
+- quantity;
+- optional note.
 
-Input fields:
+### `/contact`
 
-- Customer name
-- Phone
-- Email optional
-- Pickup date
-- Pickup time
-- Menu item
-- Quantity
-- Note optional
+Fields:
 
-### `/contact` Contact page
+- name;
+- email;
+- category;
+- message.
 
-Purpose:
+## Button component and micro-interactions
 
-- Receive inquiries other than reservations.
-- Save inquiry to DB.
-
-States:
+`BaseButton.vue` should support:
 
 ```ts
-type ContactStep = 'input' | 'complete'
-```
+type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'danger'
 
-Input fields:
-
-- Name
-- Email
-- Category
-- Message
-
-## Components
-
-### Layout components
-
-#### AppHeader.vue
-
-Responsibilities:
-
-- Logo
-- Global navigation
-- SNS links
-- Mobile hamburger menu
-- Active page style
-
-Navigation:
-
-- Home
-- About
-- Menu
-- Reserve
-- Contact
-
-#### AppFooter.vue
-
-Responsibilities:
-
-- Store name
-- Address
-- Business hours
-- Regular holiday
-- Phone
-- SNS links
-- Copyright
-
-### Common components
-
-#### BaseButton.vue
-
-Props:
-
-```ts
-type ButtonVariant = 'primary' | 'secondary' | 'outline'
+type ButtonSize = 'sm' | 'md' | 'lg'
 
 interface Props {
   label?: string
   to?: string
   type?: 'button' | 'submit'
   variant?: ButtonVariant
+  size?: ButtonSize
   disabled?: boolean
+  loading?: boolean
 }
 ```
 
-#### SectionTitle.vue
+Interaction rules:
 
-Props:
+- Hover: subtle shadow increase and up to 1–2 px upward movement.
+- Active/pressed: return toward the surface and optional small scale, no aggressive bounce.
+- Focus-visible: clear high-contrast ring.
+- Loading: preserve width, show progress state, set `aria-busy`.
+- Disabled: no hover transform, clear disabled appearance, correct native semantics.
+- Reduced motion: remove transforms and transition duration.
+- Minimum mobile target size: approximately 44 × 44 px.
 
-```ts
-interface Props {
-  title: string
-  subTitle?: string
-}
-```
+Apply consistent interaction feedback to admin table actions, carousel controls, and navigation controls, but do not animate every surface.
 
-#### PageHero.vue
-
-Props:
-
-```ts
-interface Props {
-  title: string
-  lead?: string
-}
-```
-
-#### SnsLinks.vue
-
-Requirements:
-
-- Render Instagram, X, LINE.
-- Use `target="_blank"`.
-- Use `rel="noopener noreferrer"`.
-- Ensure tap target size is large enough on mobile.
-
-### Menu components
-
-#### MenuCategoryFilter.vue
-
-Props:
-
-```ts
-interface Props {
-  selectedCategory: MenuCategoryFilterValue
-}
-```
-
-Emits:
-
-```ts
-emit('change', category)
-```
-
-#### MenuCard.vue
-
-Display:
-
-- Image
-- Name
-- Price
-- Description
-- Category label
-- Recommended label
-- Seasonal label
-- Allergies
-
-### Reservation components
-
-#### ReserveForm.vue
-
-Responsibilities:
-
-- Display inputs.
-- Manage input UI.
-- Show validation errors.
-- Move to confirmation when valid.
-
-#### ReserveConfirm.vue
-
-Responsibilities:
-
-- Display confirmation details.
-- Back button.
-- Submit button.
-
-#### ReserveComplete.vue
-
-Responsibilities:
-
-- Display completion message.
-- Link to top and menu page.
-
-### Contact components
-
-#### ContactForm.vue
-
-Responsibilities:
-
-- Display contact form.
-- Validate input.
-- Submit to `/api/contacts`.
-
-#### ContactComplete.vue
-
-Responsibilities:
-
-- Display completion message.
-
-## Composables
-
-### useMenu.ts
-
-Responsibilities:
-
-- Fetch menu from `/api/menu`.
-- Manage selected category.
-- Return filtered menu data.
-
-### useReserveForm.ts
-
-Responsibilities:
-
-- Manage reservation form state.
-- Manage validation errors.
-- Manage step state.
-- Submit to `/api/reservations`.
-
-### useContactForm.ts
-
-Responsibilities:
-
-- Manage contact form state.
-- Manage validation errors.
-- Submit to `/api/contacts`.
-
-## Constants
-
-### constants/storeInfo.ts
-
-Example:
-
-```ts
-export const storeInfo = {
-  name: 'Boulangerie Mugi no Akari',
-  address: '東京都〇〇区〇〇 1-2-3',
-  businessHours: '7:00〜18:00',
-  regularHoliday: '火曜日・第2水曜日',
-  phone: '03-1234-5678',
-  nearestStation: '〇〇駅から徒歩8分',
-  parking: '近隣コインパーキングをご利用ください',
-  mapEmbedUrl: ''
-}
-```
-
-### constants/snsLinks.ts
-
-Example:
-
-```ts
-export const snsLinks = [
-  {
-    type: 'instagram',
-    label: 'Instagram',
-    url: 'https://example.com/instagram'
-  },
-  {
-    type: 'x',
-    label: 'X',
-    url: 'https://example.com/x'
-  },
-  {
-    type: 'line',
-    label: 'LINE',
-    url: 'https://example.com/line'
-  }
-]
-```
-
-### constants/pickupTimes.ts
-
-```ts
-export const pickupTimes = [
-  '10:00',
-  '10:30',
-  '11:00',
-  '11:30',
-  '12:00',
-  '12:30',
-  '13:00',
-  '13:30',
-  '14:00',
-  '14:30',
-  '15:00',
-  '15:30',
-  '16:00',
-  '16:30',
-  '17:00',
-  '17:30'
-] as const
-```
-
-## Styling
-
-Use SCSS.
-
-### assets/styles/_variables.scss
+## SCSS tokens
 
 ```scss
 :root {
   --color-base: #fff8ec;
   --color-surface: #ffffff;
   --color-main: #d8a85f;
+  --color-main-strong: #b77a31;
   --color-accent: #9b5c2e;
   --color-text: #3f2a1d;
   --color-muted: #7a6a5d;
   --color-border: #ead8bd;
+  --color-danger: #a33b32;
+  --color-success: #4d7355;
   --shadow-card: 0 10px 24px rgba(63, 42, 29, 0.08);
+  --shadow-button: 0 6px 14px rgba(63, 42, 29, 0.16);
   --radius-card: 18px;
   --radius-button: 999px;
+  --focus-ring: 0 0 0 3px rgba(155, 92, 46, 0.28);
 }
 ```
 
-### Breakpoints
+Breakpoints:
 
 ```scss
 $breakpoint-sm: 600px;
@@ -410,17 +190,9 @@ $breakpoint-md: 900px;
 $breakpoint-lg: 1200px;
 ```
 
-## Animation
+## Reduced motion
 
-Implement subtle animation:
-
-- Hero fade-in
-- Scroll fade-in
-- Menu card hover lift
-- Button micro-interaction
-- Decorative wheat/steam/handwritten lines
-
-Must support:
+At minimum:
 
 ```scss
 @media (prefers-reduced-motion: reduce) {
@@ -435,14 +207,32 @@ Must support:
 }
 ```
 
-## SEO metadata
+The hero carousel JavaScript must also detect reduced motion and not start autoplay. CSS alone is not sufficient.
 
-Use per-page metadata.
+## Accessibility
 
-| Page | title | description |
-|---|---|---|
-| `/` | Boulangerie Mugi no Akari｜住宅街の小さなベーカリー | 国産小麦と天然酵母で焼き上げる、住宅街の小さなパン屋です。 |
-| `/about` | お店について｜Boulangerie Mugi no Akari | こだわり、店舗情報、アクセスをご紹介します。 |
-| `/menu` | メニュー｜Boulangerie Mugi no Akari | 食パン、惣菜パン、菓子パン、季節限定メニューをご覧いただけます。 |
-| `/reserve` | 取り置き予約｜Boulangerie Mugi no Akari | 人気商品の取り置き予約はこちらから。 |
-| `/contact` | お問い合わせ｜Boulangerie Mugi no Akari | 商品、大量注文、イベント出店、アレルギーに関するお問い合わせはこちらから。 |
+- One `h1` per page.
+- Logical heading order.
+- Meaningful image alt text.
+- Decorative images use empty alt.
+- Labels for every input.
+- Field errors use `aria-invalid` and `aria-describedby`.
+- Keyboard-accessible menu, carousel, tables, forms, dialogs, and pagination.
+- Visible focus.
+- Do not communicate status through color alone.
+- Modal focus must be managed when modals are used.
+- Status changes should announce success or failure without intrusive animation.
+
+## SEO
+
+Public pages use page-specific title and description.
+
+Admin pages:
+
+```ts
+useSeoMeta({
+  robots: 'noindex, nofollow'
+})
+```
+
+Do not include admin routes in public sitemap output.

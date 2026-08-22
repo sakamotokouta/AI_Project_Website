@@ -1,52 +1,77 @@
-# 02_SYSTEM_DESIGN.md
+# 02 System design
 
-## Architecture overview
+## Architecture
 
-Build this project as a full-stack Nuxt 3 application.
+Build one full-stack Nuxt 3 application.
 
 ```txt
-Browser
-  ↓
-Nuxt 3 pages/components
-  ↓ $fetch / useFetch
+Public browser / Admin browser
+        ↓
+Nuxt pages, layouts, middleware, components, composables
+        ↓ $fetch / useFetch
 Nuxt server/api
-  ↓ Prisma Client
+        ↓
+Validation + authentication/authorization + service utilities
+        ↓ Prisma Client
 PostgreSQL
+
+Admin image upload
+        ↓ multipart API + validation
+Storage adapter
+        ↓
+public/uploads for the local/portfolio release
 ```
 
-## Important rule
+Do not create a separate Express server.
 
-Do not create a separate Express backend. Backend APIs must be implemented in Nuxt `server/api`.
+## Responsibility boundaries
 
-## Application responsibilities
+### Public frontend
 
-### Frontend
+- Render public pages.
+- Fetch public menu and hero-slide data.
+- Handle client-side form validation for user experience.
+- Submit reservations and inquiries.
+- Render the responsive, accessible hero carousel.
 
-- Render pages.
-- Display menu, store information, SNS links, and forms.
-- Provide responsive UI.
-- Perform client-side validation for better UX.
-- Call Nuxt API endpoints.
-- Display confirmation and completion states.
+### Admin frontend
+
+- Render the login page and protected admin pages.
+- Never determine authorization by client state alone.
+- Use route middleware to redirect unauthenticated navigation.
+- Call protected admin APIs.
+- Manage menu items, reservations, contacts, images, and hero slides.
 
 ### Backend
 
-- Implement API handlers under `server/api`.
-- Validate request bodies using Zod.
-- Read/write PostgreSQL through Prisma.
-- Return consistent JSON responses.
-- Prevent invalid reservation/contact data from being saved.
+- Validate all payloads with Zod.
+- Authenticate admin requests server-side.
+- Authorize every protected admin endpoint.
+- Read and write PostgreSQL through Prisma.
+- Store only session-token hashes.
+- Handle multipart uploads safely.
+- Return consistent JSON responses without stack traces.
 
 ### Database
 
-- Store menu items.
-- Store reservations.
-- Store reservation items.
-- Store contact inquiries.
+Store:
 
-## Directory structure
+- menu items;
+- reservations and reservation items;
+- contact inquiries;
+- admin users;
+- admin sessions;
+- media metadata;
+- hero-slide configuration.
 
-Use the following structure.
+### Local storage adapter
+
+- Save uploaded image bytes under `public/uploads`.
+- Generate safe filenames.
+- Expose a narrow interface such as `save`, `delete`, and `exists`.
+- Keep storage-specific logic out of route handlers so object storage can replace it later.
+
+## Suggested directory structure
 
 ```txt
 boulangerie-mugi-no-akari/
@@ -56,19 +81,32 @@ boulangerie-mugi-no-akari/
 ├─ docker-compose.yml
 ├─ .env
 ├─ .env.example
+├─ .gitignore
 ├─ README.md
 ├─ AGENTS.md
+├─ CODEX_INITIAL_PROMPT.md
+├─ CODEX_EXECUTION_PROMPTS.md
 │
 ├─ assets/
-│  ├─ images/
-│  │  ├─ hero/
-│  │  ├─ menu/
-│  │  └─ common/
 │  └─ styles/
 │     ├─ _variables.scss
 │     ├─ _mixins.scss
 │     ├─ _base.scss
+│     ├─ _animations.scss
+│     ├─ _admin.scss
 │     └─ main.scss
+│
+├─ public/
+│  ├─ images/
+│  │  ├─ hero/
+│  │  ├─ menu/
+│  │  ├─ about/
+│  │  └─ common/
+│  └─ uploads/
+│     ├─ hero/
+│     ├─ menu/
+│     ├─ about/
+│     └─ common/
 │
 ├─ components/
 │  ├─ layout/
@@ -77,32 +115,40 @@ boulangerie-mugi-no-akari/
 │  │  └─ MobileMenu.vue
 │  ├─ common/
 │  │  ├─ BaseButton.vue
+│  │  ├─ BaseAlert.vue
+│  │  ├─ BaseModal.vue
 │  │  ├─ SectionTitle.vue
 │  │  ├─ PageHero.vue
 │  │  ├─ SnsLinks.vue
 │  │  └─ FadeInSection.vue
 │  ├─ top/
-│  │  ├─ HeroSection.vue
+│  │  ├─ HeroCarousel.vue
+│  │  ├─ HeroSlide.vue
 │  │  ├─ ConceptSection.vue
 │  │  ├─ RecommendedMenuSection.vue
 │  │  ├─ StoreInfoSection.vue
 │  │  └─ CtaSection.vue
 │  ├─ menu/
-│  │  ├─ MenuCard.vue
-│  │  ├─ MenuCategoryFilter.vue
-│  │  └─ MenuList.vue
 │  ├─ reserve/
-│  │  ├─ ReserveForm.vue
-│  │  ├─ ReserveConfirm.vue
-│  │  └─ ReserveComplete.vue
-│  └─ contact/
-│     ├─ ContactForm.vue
-│     └─ ContactComplete.vue
+│  ├─ contact/
+│  └─ admin/
+│     ├─ AdminSidebar.vue
+│     ├─ AdminHeader.vue
+│     ├─ AdminDataTable.vue
+│     ├─ AdminPagination.vue
+│     ├─ AdminStatusBadge.vue
+│     ├─ AdminMenuForm.vue
+│     ├─ AdminMediaPicker.vue
+│     ├─ AdminMediaUpload.vue
+│     └─ AdminHeroSlideForm.vue
 │
 ├─ composables/
 │  ├─ useMenu.ts
+│  ├─ useHeroSlides.ts
 │  ├─ useReserveForm.ts
 │  ├─ useContactForm.ts
+│  ├─ useAdminSession.ts
+│  ├─ useAdminApi.ts
 │  └─ useScrollAnimation.ts
 │
 ├─ constants/
@@ -110,12 +156,34 @@ boulangerie-mugi-no-akari/
 │  ├─ snsLinks.ts
 │  └─ pickupTimes.ts
 │
+├─ layouts/
+│  ├─ default.vue
+│  └─ admin.vue
+│
+├─ middleware/
+│  └─ admin-auth.ts
+│
 ├─ pages/
 │  ├─ index.vue
 │  ├─ about.vue
 │  ├─ menu.vue
 │  ├─ reserve.vue
-│  └─ contact.vue
+│  ├─ contact.vue
+│  └─ admin/
+│     ├─ login.vue
+│     ├─ index.vue
+│     ├─ menu/
+│     │  ├─ index.vue
+│     │  ├─ new.vue
+│     │  └─ [id].vue
+│     ├─ reservations/
+│     │  ├─ index.vue
+│     │  └─ [id].vue
+│     ├─ contacts/
+│     │  ├─ index.vue
+│     │  └─ [id].vue
+│     ├─ images.vue
+│     └─ hero-slides.vue
 │
 ├─ prisma/
 │  ├─ schema.prisma
@@ -124,21 +192,57 @@ boulangerie-mugi-no-akari/
 ├─ server/
 │  ├─ api/
 │  │  ├─ menu.get.ts
-│  │  ├─ menu/
-│  │  │  └─ recommended.get.ts
+│  │  ├─ menu/recommended.get.ts
+│  │  ├─ site/hero-slides.get.ts
 │  │  ├─ reservations.post.ts
-│  │  └─ contacts.post.ts
+│  │  ├─ contacts.post.ts
+│  │  └─ admin/
+│  │     ├─ auth/login.post.ts
+│  │     ├─ auth/logout.post.ts
+│  │     ├─ auth/session.get.ts
+│  │     ├─ menu/index.get.ts
+│  │     ├─ menu/index.post.ts
+│  │     ├─ menu/[id].get.ts
+│  │     ├─ menu/[id].patch.ts
+│  │     ├─ reservations/index.get.ts
+│  │     ├─ reservations/[id].get.ts
+│  │     ├─ reservations/[id].patch.ts
+│  │     ├─ contacts/index.get.ts
+│  │     ├─ contacts/[id].get.ts
+│  │     ├─ contacts/[id].patch.ts
+│  │     ├─ media/index.get.ts
+│  │     ├─ media/index.post.ts
+│  │     ├─ media/[id].patch.ts
+│  │     ├─ media/[id].delete.ts
+│  │     ├─ hero-slides/index.get.ts
+│  │     ├─ hero-slides/index.post.ts
+│  │     ├─ hero-slides/[id].patch.ts
+│  │     └─ hero-slides/[id].delete.ts
+│  ├─ services/
+│  │  ├─ admin-session.ts
+│  │  ├─ media-storage.ts
+│  │  └─ media-usage.ts
 │  ├─ utils/
-│  │  └─ prisma.ts
+│  │  ├─ prisma.ts
+│  │  ├─ auth.ts
+│  │  ├─ api-response.ts
+│  │  └─ pagination.ts
 │  └─ validation/
+│     ├─ auth.ts
+│     ├─ menu.ts
 │     ├─ reservation.ts
-│     └─ contact.ts
+│     ├─ contact.ts
+│     ├─ media.ts
+│     └─ hero-slide.ts
 │
 ├─ types/
+│  ├─ api.ts
 │  ├─ menu.ts
 │  ├─ reservation.ts
 │  ├─ contact.ts
-│  └─ api.ts
+│  ├─ admin.ts
+│  ├─ media.ts
+│  └─ hero-slide.ts
 │
 └─ utils/
    ├─ date.ts
@@ -146,108 +250,126 @@ boulangerie-mugi-no-akari/
    └─ validation.ts
 ```
 
-## Page structure
+Equivalent organization is acceptable if responsibilities and security boundaries remain clear.
+
+## Public data flows
+
+### Menu
+
+```txt
+/menu
+  ↓ GET /api/menu
+server/api/menu.get.ts
+  ↓ Prisma
+MenuItem + MediaAsset
+  ↓ flattened public DTO
+Menu cards
+```
+
+### Hero slides
 
 ```txt
 /
-├─ Top page
-├─ /about
-│  └─ Store concept, commitment, store information, access
-├─ /menu
-│  └─ Menu list and category filter
-├─ /reserve
-│  └─ Reservation form, confirmation, completion
-└─ /contact
-   └─ Contact form and completion
+  ↓ GET /api/site/hero-slides
+HeroSlide + MediaAsset
+  ↓ active slides ordered by sortOrder
+HeroCarousel
 ```
 
-## Data flow examples
-
-### Menu page
-
-```txt
-/menu page
-  ↓ useFetch('/api/menu')
-server/api/menu.get.ts
-  ↓ prisma.menuItem.findMany()
-PostgreSQL
-  ↓
-MenuList + MenuCard
-```
-
-### Reservation page
+### Reservation
 
 ```txt
 ReserveForm
-  ↓ client-side validation
+  ↓ client validation
 ReserveConfirm
   ↓ POST /api/reservations
-server/api/reservations.post.ts
-  ↓ Zod validation
-  ↓ prisma.reservation.create()
-PostgreSQL
-  ↓
-ReserveComplete
+server Zod validation
+  ↓ transaction
+Reservation + ReservationItem
 ```
 
-### Contact page
+## Admin authentication flow
 
 ```txt
-ContactForm
-  ↓ client-side validation
-POST /api/contacts
-  ↓ Zod validation
-  ↓ prisma.contactInquiry.create()
-PostgreSQL
+/admin/login
+  ↓ POST /api/admin/auth/login
+validate email/password
+  ↓ compare bcrypt hash
+create random token
+  ↓ store SHA-256 token hash in AdminSession
+set opaque token in HttpOnly cookie
   ↓
-ContactComplete
+redirect /admin
 ```
 
-## Store information policy
+For every protected request:
 
-For initial release, store information can be managed as constants in `constants/storeInfo.ts`.
-
-Example items:
-
-- Store name
-- Address
-- Business hours
-- Regular holiday
-- Phone number
-- Nearest station
-- Parking
-- Map embed URL
-
-## SNS links policy
-
-For initial release, SNS links can be managed as constants in `constants/snsLinks.ts`.
-
-External links must use:
-
-```html
-rel="noopener noreferrer"
-target="_blank"
+```txt
+cookie token
+  ↓ hash token
+AdminSession lookup + expiry + active user check
+  ↓
+allow or return 401/403
 ```
 
-## SEO policy
+Logout deletes the server-side session and clears the cookie.
 
-Use `useSeoMeta` or `useHead` per page.
+## Admin route protection
 
-Set at least:
+- Apply named middleware to all admin pages except login.
+- During SSR, forward the request cookie when checking the session.
+- Client middleware improves navigation UX, but the server API guard is the security boundary.
+- Do not render protected data before authorization succeeds.
 
-- title
-- description
-- og:title
-- og:description
-- og:type
-- og:image
+## API response format
 
-## Accessibility policy
+Success:
 
-- Use semantic HTML.
-- Use one `h1` per page.
-- Add `alt` to meaningful images.
-- Use `label` for every form field.
-- Use `aria-invalid` and `aria-describedby` for form errors.
-- Ensure keyboard operation.
-- Do not rely on color alone.
+```ts
+export interface ApiSuccess<T> {
+  ok: true
+  data: T
+}
+```
+
+Error:
+
+```ts
+export interface ApiError {
+  ok: false
+  message: string
+  issues?: Record<string, string[]>
+}
+```
+
+Paginated success:
+
+```ts
+export interface PaginatedData<T> {
+  items: T[]
+  page: number
+  pageSize: number
+  total: number
+  totalPages: number
+}
+```
+
+## Error policy
+
+- `400`: validation or invalid state transition.
+- `401`: missing or invalid admin session.
+- `403`: authenticated but not permitted or inactive user.
+- `404`: entity not found.
+- `409`: uniqueness conflict or attempted deletion of a referenced asset.
+- `413`: upload too large.
+- `415`: unsupported media type.
+- `500`: generic unexpected error.
+
+Never return stack traces, password hashes, session hashes, or filesystem paths to clients.
+
+## SEO and indexing
+
+- Public pages use page-specific metadata.
+- Admin pages use `robots: noindex, nofollow`.
+- Do not include admin routes in sitemap generation.
+- Avoid relying on robots rules as an access-control mechanism.

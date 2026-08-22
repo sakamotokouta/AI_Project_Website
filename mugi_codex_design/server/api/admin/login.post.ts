@@ -1,6 +1,7 @@
 import { ZodError } from 'zod'
 import { prisma } from '~/server/utils/prisma'
-import { contactSchema } from '~/server/validation/contact'
+import { loginSchema } from '~/server/validation/login'
+
 
 const toIssues = (error: ZodError) => {
   const fieldErrors = error.flatten().fieldErrors
@@ -10,15 +11,19 @@ const toIssues = (error: ZodError) => {
 export default defineEventHandler(async (event) => {
   try {
     const body = await readBody(event)
-    const parsed = contactSchema.parse(body)
-    const contact = await prisma.contactInquiry.create({
+    const parsed = loginSchema.parse(body)
+    console.log('login body:', body)
+    const login = await prisma.admin.create({
       data: parsed,
       select: { id: true },
     })
 
     setResponseStatus(event, 201)
-    return { ok: true, data: { id: contact.id, message: 'お問い合わせを受け付けました。' } }
+    return { ok: true, data: { id: login.id, message: 'ログイン完了' } }
   } catch (error) {
+
+    
+
     if (error instanceof ZodError) {
       throw createError({
         statusCode: 400,
@@ -27,10 +32,12 @@ export default defineEventHandler(async (event) => {
       })
     }
 
+    console.log('login error:', error)
+
     throw createError({
       statusCode: 500,
-      statusMessage: 'お問い合わせの保存に失敗しました。',
-      data: { ok: false, message: 'お問い合わせの保存に失敗しました。' },
+      statusMessage: 'ログインに失敗しました。',
+      data: { ok: false, message: 'ログインに失敗しました。' },
     })
   }
 })

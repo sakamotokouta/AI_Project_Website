@@ -1,96 +1,137 @@
-# 00_PROJECT_OVERVIEW.md
+# 00 Project overview
 
 ## Project name
 
-Boulangerie Mugi no Akari
+**Boulangerie Mugi no Akari**  
+Japanese reading: ブーランジェリー 麦の灯り
 
-読み：ブーランジェリー 麦の灯り
+## Product type
 
-## Site type
+A portfolio-grade full-stack website for a fictional neighborhood bakery.
 
-架空のベーカリー店舗向けWebサイト。
+## Product goal
 
-## Goal
+Communicate the bakery's atmosphere and product quality, help customers visit the shop, accept product reservations and inquiries, and give shop staff a secure, practical administration area.
 
-住宅街にある小さなパン屋「Boulangerie Mugi no Akari」の魅力を伝え、来店・取り置き予約・問い合わせ・SNSフォローにつなげる。
+## Brand concept
 
-## Main objectives
+Theme: **“A gentle light for the morning table.”**
 
-- 初めてのお客様に店舗の雰囲気やこだわりを伝える。
-- 営業時間、定休日、住所、アクセス、電話番号を分かりやすく伝える。
-- 商品メニューを写真付きで見やすく掲載する。
-- パンの取り置き予約をWeb上で受け付け、DBに保存する。
-- 予約以外のお問い合わせをWeb上で受け付け、DBに保存する。
-- Instagram、X、LINE公式アカウントへ誘導する。
-- スマートフォンでも使いやすいレスポンシブUIにする。
-- ポートフォリオとして見栄えするUI、アニメーション、READMEを整える。
+The bakery uses domestic wheat, natural yeast, and seasonal ingredients. The visual tone should feel warm, handmade, calm, and trustworthy rather than overly decorative.
 
-## Store concept
+## Public-user objectives
 
-住宅街にある小さな焼きたてパンのお店。天然酵母、国産小麦、季節の素材を使ったパンが人気。
+- Understand the shop concept, opening hours, holidays, address, access, and phone number.
+- Browse bakery products with photos, prices, descriptions, categories, and allergy information.
+- Reserve products for pickup and save the reservation in PostgreSQL.
+- Submit inquiries and save them in PostgreSQL.
+- Reach Instagram, X, and the official LINE account.
+- Use the site comfortably on desktop, tablet, and smartphone.
 
-## Store features
+## Staff objectives
 
-- 毎朝7時から焼きたてパンを販売する。
-- 人気商品は午前中に売り切れることがある。
-- 季節限定メニューがある。
-- Instagramで新商品や焼き上がり情報を発信している。
-- 電話対応の負担を減らすため、Web予約・お問い合わせを導入したい。
-- 初めて来店する人にも店舗の雰囲気や場所を分かりやすく伝えたい。
+Authenticated staff must be able to:
 
-## Target users
+- View an admin dashboard.
+- Add and edit menu items.
+- Activate or deactivate menu items without destructive deletion.
+- View reservation lists and details and update reservation status.
+- View contact inquiry lists and details and update inquiry status.
+- Upload and manage site images.
+- Assign images to menu items.
+- Create, reorder, activate, edit, and remove home hero slides.
 
-- 通勤・通学前にパンを購入したい人。
-- 近隣に住む主婦層。
-- カフェ利用をしたい人。
-- 週末に家族で利用したい人。
-- 人気商品の取り置きをしたい人。
-- 大量注文やイベント出店について問い合わせたい人。
+## Admin discoverability and security
 
-## Initial release scope
+- Do not place an admin link in the public header, footer, sitemap, or ordinary public navigation.
+- The login page is reached by entering `/admin/login` directly.
+- The hidden URL is not considered protection. Authentication and server-side authorization are mandatory.
+- Every admin page except the login page requires a valid admin session.
+- Every admin API requires a valid admin session.
 
-Implement:
+## Public pages
 
-- Top page
-- About page
-- Menu page
-- Reservation page
-- Contact page
-- SNS links
-- Responsive layout
-- Basic SEO metadata
-- UI decoration and animations
-- Form validation
-- Confirmation/completion states
-- Menu data listing from DB
-- Reservation DB saving
-- Contact inquiry DB saving
-- Store information display
-- Google Map iframe placeholder or embedded map area
+- `/` — home
+- `/about` — bakery concept and access
+- `/menu` — menu list and category filtering
+- `/reserve` — reservation input, confirmation, submission, and completion
+- `/contact` — inquiry input, submission, and completion
 
-Out of scope for initial release:
+## Admin pages
 
-- Admin dashboard
-- Authentication/login
+- `/admin/login`
+- `/admin`
+- `/admin/menu`
+- `/admin/menu/new`
+- `/admin/menu/[id]`
+- `/admin/reservations`
+- `/admin/reservations/[id]`
+- `/admin/contacts`
+- `/admin/contacts/[id]`
+- `/admin/images`
+- `/admin/hero-slides`
+
+## Home-page revision requirements
+
+### Responsive hero fix
+
+The shop name, public header/navigation, and hero image must not overlap at supported viewport sizes. Avoid fragile fixed coordinates and negative margins. Use responsive layout rules and a separate readable text region on small screens.
+
+### Multi-image hero carousel
+
+- Load active hero slides from the database through a public API.
+- Change slides every 5 seconds by default.
+- Use a subtle fade transition.
+- Include previous, next, indicator dots, and pause/play controls.
+- Pause while hovered, focused, or when the browser tab is hidden.
+- When `prefers-reduced-motion: reduce` is active, disable autoplay and significant transitions.
+- If only one active slide exists, do not start a timer and hide unnecessary controls.
+- Keep the hero dimensions stable to prevent layout shift.
+
+## Interaction-quality requirement
+
+Buttons and interactive controls should feel responsive through restrained hover, focus, loading, and active states. Use small transform and shadow changes only when they do not reduce clarity, readability, performance, or accessibility.
+
+## In-scope features
+
+- Public pages and shared navigation
+- PostgreSQL-backed menu, reservations, reservation items, and contacts
+- Protected admin authentication
+- Admin menu management
+- Admin reservation and contact management
+- Media library and local image upload for the local/portfolio release
+- Hero-slide management and public carousel
+- Responsive SCSS design
+- Client and server validation
+- Accessibility and reduced-motion support
+- Basic public SEO
+- Admin `noindex, nofollow`
+- README and setup documentation
+
+## Out of scope
+
 - Payment
+- Customer accounts
 - Real-time inventory
 - Actual email sending
-- Staff notification management
-- CMS integration
-- Multi-language support
-- Production-level spam protection
+- Staff push notifications
+- Multi-language UI
+- Production-grade anti-spam service
+- Production object storage implementation
+- Advanced audit logs and multi-role authorization
 
 ## Completion criteria
 
-The initial release is complete when:
+The release is complete when:
 
-- All pages are implemented and navigable.
-- Menu items are displayed from PostgreSQL via API.
-- Category filtering works on the menu page.
-- Reservation form validates input, displays confirmation, and saves to DB.
-- Contact form validates input and saves to DB.
-- SNS links work and are safe external links.
-- Layout does not break on PC, tablet, or smartphone.
-- Warm bakery-like design and subtle animations are implemented.
-- Basic SEO metadata is configured.
-- README explains the project purpose, stack, features, setup, and future improvements.
+- All public and admin routes are implemented.
+- Public functionality continues to work after the admin additions.
+- Unauthenticated users cannot access protected admin pages or APIs.
+- Menu data is displayed from PostgreSQL.
+- Reservations and contacts validate and save successfully.
+- Admin users can manage the required records and images.
+- Active hero slides render on the home page and the carousel meets accessibility rules.
+- The shop name and hero never overlap at the required viewport widths.
+- Buttons have subtle, consistent interaction states.
+- Type checking and production build succeed.
+- The README documents environment setup, admin seeding, migrations, uploads, and limitations.

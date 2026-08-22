@@ -1,12 +1,6 @@
-# 01_ENVIRONMENT_SETUP.md
+# 01 Environment setup
 
-## Purpose
-
-This document defines the required local development environment and setup commands for the Boulangerie Mugi no Akari project.
-
-## Technology stack
-
-Use this stack:
+## Required stack
 
 | Area | Technology |
 |---|---|
@@ -17,24 +11,24 @@ Use this stack:
 | Runtime | Node.js LTS |
 | Database | PostgreSQL |
 | ORM | Prisma |
-| Local DB | Docker Compose |
+| Local database | Docker Compose |
 | Validation | Zod |
 | Styling | SCSS |
 | Package manager | npm |
+| Password hashing | `bcryptjs` |
+| Upload signature validation | `file-type` |
 
-## Required tools
-
-Install the following on the local machine:
+## Required local tools
 
 - Node.js LTS
 - npm
 - Git
-- Docker Desktop
-- Visual Studio Code or another editor
+- Docker Desktop or Docker Engine with Compose
+- An editor such as Visual Studio Code
 
 ## Project creation
 
-Create a new Nuxt 3 project.
+If the repository does not already contain a Nuxt project:
 
 ```bash
 npm create nuxt@latest boulangerie-mugi-no-akari -- -t v3
@@ -42,25 +36,23 @@ cd boulangerie-mugi-no-akari
 npm install
 ```
 
-If the Nuxt starter asks questions, choose TypeScript-compatible defaults and keep the setup simple.
+If the repository already contains the application, do not recreate it. Inspect and update the existing project.
 
-## Dependency installation
+## Dependencies
 
-Install runtime dependencies:
+Runtime dependencies:
 
 ```bash
-npm install @prisma/client zod
+npm install @prisma/client zod bcryptjs file-type
 ```
 
-Install development dependencies:
+Development dependencies:
 
 ```bash
-npm install -D prisma sass tsx
+npm install -D prisma sass tsx typescript vue-tsc
 ```
 
 ## Recommended package scripts
-
-Add or confirm the following scripts in `package.json`.
 
 ```json
 {
@@ -69,17 +61,21 @@ Add or confirm the following scripts in `package.json`.
     "build": "nuxt build",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
+    "typecheck": "nuxt typecheck",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:seed": "tsx prisma/seed.ts",
     "db:studio": "prisma studio"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   }
 }
 ```
 
 ## Docker Compose
 
-Create `docker-compose.yml` at the project root.
+Create or update `docker-compose.yml`:
 
 ```yaml
 services:
@@ -90,9 +86,9 @@ services:
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_USER: mugi_user
-      POSTGRES_PASSWORD: mugi_password
-      POSTGRES_DB: mugi_no_akari
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
@@ -100,141 +96,143 @@ volumes:
   postgres_data:
 ```
 
-Start PostgreSQL:
-
-```bash
-docker compose up -d
-```
-
-Stop PostgreSQL:
-
-```bash
-docker compose down
-```
-
-Delete DB volume when a complete reset is required:
-
-```bash
-docker compose down -v
-```
-
 ## Environment variables
 
-Create `.env` at the project root.
+Create `.env` locally. Do not commit it.
 
 ```env
-DATABASE_URL="postgresql://mugi_user:mugi_password@localhost:5432/mugi_no_akari?schema=public"
+POSTGRES_USER=mugi_user
+POSTGRES_PASSWORD=change_this_local_password
+POSTGRES_DB=mugi_no_akari
+DATABASE_URL="postgresql://mugi_user:change_this_local_password@localhost:5432/mugi_no_akari?schema=public"
+
+ADMIN_EMAIL=admin@example.com
+ADMIN_PASSWORD=replace_with_a_long_unique_password
+ADMIN_DISPLAY_NAME=Bakery Administrator
+ADMIN_SESSION_HOURS=8
+
+UPLOAD_DIR=public/uploads
+MAX_UPLOAD_SIZE_MB=5
 ```
 
-Never expose `DATABASE_URL` to frontend code. Use it only from Prisma and Nuxt server code.
-
-Create `.env.example`.
+Create `.env.example` with safe placeholders, not real credentials:
 
 ```env
-DATABASE_URL="postgresql://mugi_user:mugi_password@localhost:5432/mugi_no_akari?schema=public"
+POSTGRES_USER=mugi_user
+POSTGRES_PASSWORD=replace_me
+POSTGRES_DB=mugi_no_akari
+DATABASE_URL="postgresql://mugi_user:replace_me@localhost:5432/mugi_no_akari?schema=public"
+
+ADMIN_EMAIL=admin@example.com
+ADMIN_PASSWORD=replace_with_a_long_unique_password
+ADMIN_DISPLAY_NAME=Bakery Administrator
+ADMIN_SESSION_HOURS=8
+
+UPLOAD_DIR=public/uploads
+MAX_UPLOAD_SIZE_MB=5
 ```
 
-## Prisma initialization
+## Environment-variable rules
 
-Initialize Prisma.
+- `DATABASE_URL`, `ADMIN_PASSWORD`, password hashes, and session data are server-only.
+- Do not place sensitive values in `runtimeConfig.public`.
+- `ADMIN_PASSWORD` is used by the seed process to create or update the initial admin account. It must be hashed before database storage.
+- Production must use HTTPS so the session cookie can use `Secure`.
+- Do not print secrets in logs or completion reports.
+
+## Upload directory
+
+Create:
+
+```txt
+public/uploads/
+├─ hero/
+├─ menu/
+├─ about/
+└─ common/
+```
+
+Add an empty placeholder such as `.gitkeep` if the directory structure must exist in Git. Uploaded files themselves should normally be excluded from Git:
+
+```gitignore
+/public/uploads/*
+!/public/uploads/.gitkeep
+```
+
+The implementation must create missing subdirectories safely when an upload occurs.
+
+## Prisma setup
 
 ```bash
 npx prisma init
-```
-
-Then replace `prisma/schema.prisma` with the schema defined in `docs/03_DATABASE_DESIGN.md`.
-
-Generate Prisma Client:
-
-```bash
 npm run db:generate
 ```
 
-Create and apply migration:
-
-```bash
-npm run db:migrate -- --name init
-```
-
-Seed database:
-
-```bash
-npm run db:seed
-```
-
-Open Prisma Studio when needed:
-
-```bash
-npm run db:studio
-```
-
-## First development run
-
-Start DB:
+For a new database:
 
 ```bash
 docker compose up -d
-```
-
-Run migration and seed:
-
-```bash
 npm run db:migrate -- --name init
 npm run db:seed
 ```
 
-Start Nuxt:
+For an existing project receiving this revision:
 
 ```bash
+docker compose up -d
+npm run db:migrate -- --name add_admin_media_and_hero
+npm run db:seed
+```
+
+Use an accurate migration name if the actual change set differs.
+
+## First run
+
+```bash
+docker compose up -d
+npm install
+npm run db:generate
+npm run db:migrate -- --name init
+npm run db:seed
 npm run dev
 ```
 
-Open the local URL displayed by Nuxt.
+Expected local addresses:
 
-## Expected local URLs
-
-- Nuxt app: `http://localhost:3000`
+- Nuxt: `http://localhost:3000`
+- Admin login: `http://localhost:3000/admin/login`
 - Prisma Studio: `http://localhost:5555`
 - PostgreSQL: `localhost:5432`
 
+## Verification
+
+```bash
+npm run typecheck
+npm run build
+```
+
 ## Common troubleshooting
 
-### Port 3000 is already in use
-
-Use another port:
+### Port 3000 is in use
 
 ```bash
 npm run dev -- --port 3001
 ```
 
-### Port 5432 is already in use
+### Port 5432 is in use
 
-Either stop the existing PostgreSQL process or change the Docker Compose port mapping.
-
-Example:
+Change the host port, for example:
 
 ```yaml
 ports:
   - "5433:5432"
 ```
 
-Then update `.env`:
+Then update `DATABASE_URL` to use port `5433`.
 
-```env
-DATABASE_URL="postgresql://mugi_user:mugi_password@localhost:5433/mugi_no_akari?schema=public"
-```
+### Database reset for local development
 
-### Prisma Client is not generated
-
-Run:
-
-```bash
-npm run db:generate
-```
-
-### DB needs a clean reset
-
-Only do this for local development:
+This deletes local data:
 
 ```bash
 docker compose down -v
@@ -242,3 +240,15 @@ docker compose up -d
 npm run db:migrate -- --name init
 npm run db:seed
 ```
+
+### Admin login fails after changing the environment password
+
+Run the seed again so the password hash is updated:
+
+```bash
+npm run db:seed
+```
+
+### Uploaded images disappear after deployment
+
+The local filesystem design is intended for local or persistent-server portfolio deployment. Serverless and ephemeral environments may discard uploaded files. Replace the storage adapter with object storage before production deployment.
