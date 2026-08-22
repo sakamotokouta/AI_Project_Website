@@ -102,3 +102,20 @@ model ContactInquiry {
   @@index([status])
   @@index([createdAt])
 }
+
+enum AdminRole{
+  SUPER_ADMIN 
+  STAFF
+}
+
+model Admin{
+  id            Int       @id @default(autoincrement())
+  email String @unique 
+  passwordHash String
+  name String
+  role AdminRole @default(STAFF)
+  isActive Boolean @default(true)
+  lastLginAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

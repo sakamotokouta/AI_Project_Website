@@ -5,9 +5,9 @@ services:
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: mugi_user
+      POSTGRES_PASSWORD: mugi_password
+      POSTGRES_DB: mugi_no_akari
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
